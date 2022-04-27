@@ -194,7 +194,7 @@ thematic::thematic_shiny()
 
 
 
-#mydb = dbConnect(MySQL(), user='sql4479557', password='hRYkyBPDVG', dbname='sql4479557', host='sql4.freesqldatabase.com')
+#mydb = dbConnect(MySQL(), user='', password='', dbname='sql4479557', host='')
 
 
 #dbRemoveTable(mydb,"reactive_dataframe")
@@ -219,7 +219,8 @@ thematic::thematic_shiny()
 options(mysql = list(
   "host" = " ",
   "port" = ,
-  "user" = "",
+  "
+  " = "",
   "password" = ""
 ))
 
