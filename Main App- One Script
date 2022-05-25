@@ -1,5 +1,7 @@
+
+        
+#call prerequisite libraries
 library("DT")
-library("dplyr")library("DT")
 library("dplyr")
 library("shinydashboard")
 library("leaflet")
@@ -12,12 +14,23 @@ library(bslib)
 library(shiny)
 library(shinyjs)
 library(shinyWidgets)
-my_css <- "
+library(dplyr)
+library(lubridate)
 
-    
+
+#define design layout
+my_css <- "
+.navbar { background-color:#36393B ;
+                       font-family: Antic;
+                       font-size: 15px;
+                       color: #FFD166  ; }
+
 
 @import url('https://fonts.googleapis.com/css?family=Assistant');
 @import url('https://fonts.googleapis.com/css?family=Antic');
+@import url('https://fonts.googleapis.com/css?family=Khula');
+
+
 
 div.centre {
   text-align: left;
@@ -28,8 +41,6 @@ div.centre {
   margin-left: auto;
   margin-right: auto;
 }
-
-
 
 
 
@@ -78,10 +89,6 @@ div.layout {
   text-align: center;
 }
 
-
-
-@import url(https://fonts.googleapis.com/css?family=Antic);
-@import url(https://fonts.googleapis.com/css?family=Khula);
 
 html, body{
   height: 100%;
@@ -140,25 +147,18 @@ body{
 }
 
 
+.shiny-output-error {color: #1b03a3 }
 
+.shiny-output-error-validation {
+    color: #1b03a3
+}
 
-
-
-
-
+hr {border-top: 2px solid #FFD166;}
 
 "
 
-
-
-
-
-
-
-
-
 # Create a custom theme
-cute_theme <- bslib::bs_theme(
+golden_theme <- bslib::bs_theme(
   
   bg = "#36393B", # background colour
   fg = "#FFD166", # most of the text on your app
@@ -170,108 +170,9 @@ cute_theme <- bslib::bs_theme(
 )
 
 
-neon_theme <- bs_theme(
-  version = 4,
-  bg = "#000000",
-  fg = "#FFFFFF",
-  primary = "#9600FF",
-  secondary = "#1900A0",
-  success = "#38FF12",
-  info = "#00F5FB",
-  warning = "#FFF100",
-  danger = "#FF00E3",
-  base_font = "Marker Felt",
-  heading_font = "Marker Felt",
-  code_font = "Chalkduster"
-)
-
-
-
-
 
 
 thematic::thematic_shiny()
-
-
-
-#mydb = dbConnect(MySQL(), user='', password='', dbname='sql4479557', host='')
-
-
-#dbRemoveTable(mydb,"reactive_dataframe")
-
-#mag<-c(4,5)
-#depth<-c(2,3)
-#reactive_dataframe<-data.frame(mag,depth)
-#dbWriteTable(mydb, name='reactive_dataframe', value=reactive_dataframe, row.names=FALSE)
-
-#dbWriteTable(mydb, name='reactive_dataframe', value=reactive_dataframe, row.names = FALSE)
-
-
-
-#dbWriteTable(mydb, name='reactive_dataframe', value=reactive_dataframe)
-#dbRemoveTable(mydb,"reactive_dataframe")
-#dbListTables(mydb)
-
-
-
-
-
-options(mysql = list(
-  "host" = " ",
-  "port" = ,
-  "
-  " = "",
-  "password" = ""
-))
-
-
-databaseName <- "  "
-table <- "reactive_dataframe"
-
-saveData <- function(data) {
-  # Connect to the database                       
-  db <- dbConnect(MySQL(), dbname = databaseName, host = options()$mysql$host,
-                  port = options()$mysql$port, user = options()$mysql$user,
-                  password = options()$mysql$password)
-  
-  #dbWriteTable(db, "reactive_dataframe", data, row.names=F)
-  #dbWriteTable(db, "reactive_dataframe", data, append = TRUE)
-  #dbAppendTable(db, "reactive_dataframe", data, row.names=F)
-  #dbWriteTable(db, "reactive_dataframe", data, overwrite = TRUE, row.names=F)
-  dbWriteTable(db, "reactive_dataframe", data, append = TRUE, row.names=F)
-  
-  dbDisconnect(db)
-}
-
-loadData <- function() {
-  # Connect to the database
-  db <- dbConnect(MySQL(), dbname = databaseName, host = options()$mysql$host,
-                  port = options()$mysql$port, user = options()$mysql$user,
-                  password = options()$mysql$password)
-  # Construct the fetching query
-  query <- sprintf("SELECT * FROM %s", table)
-  # Submit the fetch query and disconnect
-  data <- dbGetQuery(db, query)
-  dbDisconnect(db)
-  data
-}
-
-
-
-
-
-
-
-
-
-
-
-
-#echartUI<-function(id) {
-#  ns<-NS(id)
-#  echarts4rOutput(ns("timeline"))
-#}
-
 
 
 #time filter control slider
@@ -280,7 +181,6 @@ echart_ui <- function(id) {
   ns <- shiny::NS(id)
   
   shiny::tagList(
-    
     
     echarts4rOutput(ns("timeline")),
     br(),
@@ -398,917 +298,36 @@ showDTdataUI <- function(id) {
 
 
 
-DT_server <- function(id, quake_data2) {  
+DT_server <- function(id, quake_data3) {  
   
   shiny::moduleServer(
     id,
     
     function(input, output, session) {
       
-      #output$table <- renderDataTable({        
-        
-      output$table<-renderTable({
-        last5 <- quake_data2()
-        
-        
-        last5 <- select(last5, time, place, magnitude= mag, depth,
-                        type)  #miss size
-        
-        
-        
-        #last5 <- last5[1:5,]    
-        
-        
-        #change all capitals T's to lower case
-        last5$place <- gsub("T"," t",last5$place)
-        
-        #last5$time <- as.POSIXlt(last5$time, tz = "UTC")
-        
-        #create new variable and dataframe
-        newdata<-last5%>%mutate(ex_depth=depth*1000)
-        
-        
-        
-        #round numeric variables
-        newdata<-newdata%>%mutate_if(is.numeric, round, 2)
-        
-        
-        
-        
-        # newdata$size <- cut(newdata$magnitude,breaks = c(-1, 3.9, 4.9, 5.9, 6.9, 7.9, 12),
-        #                labels=c("minor", "light", "moderate", "strong", "major", "great 8+"))
-        
-        
-        
-        
-        
-        newdata<-newdata%>%filter(!is.na(depth)) %>%
-          select(time,place,magnitude)%>%   #slice_head(n = 5)
-          slice(which.max(magnitude))%>% rename(Time = time,
-                                                Location = place,
-                                                Largest = magnitude)
-        #summarise(
-        #count = n(),
-        #mean_mag = mean(magnitude, na.rm = TRUE),
-        #min_mag = min(magnitude, na.rm = TRUE),
-        #max_mag= max(magnitude, na.rm= TRUE)
-        
-        #  )  
-        #count(size) %>%
-        #arrange(desc(n))%>%
-        #mutate(prop=n/sum(n))%>%
-        #mutate_if(is.numeric, round,2)%>%
-        #ungroup()
-        
-        library(dplyr)
-        library(lubridate)
-        
-        #newdata %>% transmute(time = dmy_hm(time)) %>% arrange(desc(time))
-        
-        data.frame(newdata)
-       
-        
-        
-        #DT::datatable(newdata,options = list(
-       #  initComplete = JS(
-        #    "function(settings, json) {",
-        #    "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
-       #     "}")
-       # ))
-        
-      })
-    })
-}
-
-
-
-
-
-
-
-STATS_server <- function(id, quake_data) {
-  
-  shiny::moduleServer(
-    id,
-    function(input, output, session) {
-      
-      
-      #Some simple statistics about quakes  
-      output$stats_quake <- renderUI({
-        
-        
-        p(strong("Total quakes reported"), br(),
-          nrow(quake_data()),
-          br(),
-          br(),
-          
-          strong("Strongest quake "), br(),
-          max(quake_data()$mag)," magnitude", br(),
-          select(filter(quake_data(),mag==max(mag)),place), br(),
-          select(filter(quake_data(),mag==max(mag)),time) )
-      })
-      
-    })
-  
-}  
-
-
-
-statsUI <- function(id) {
-  # Create a namespace function using the provided id
-  ns <- NS(id)
-  # Return a piece of UI
-  # namespace the id by wrapping it in 'ns()'
-  uiOutput(ns("stats_quake"))
-}
-
-
-
-
-
-
-ECHART_server <- function(id, quake_data2) {  
-  
-  shiny::moduleServer(
-    id,
-    
-    function(input, output, session) {
-      
-      
-      
-      output$timeline <- renderEcharts4r({
-        quake_data2() %>%  
-          e_charts(time) %>%
-          e_bar(mag) %>%
-          e_axis_labels(x = "Date",y= "Magnitute") %>% # axis labels
-          e_title("Timeline" ) %>%  # Add title
-          e_theme("halloween") %>%  # theme
-          e_legend(show = FALSE) %>%  # move legend to the bottom
-          e_tooltip(trigger = "axis")  %>% #tooltip
-          e_visual_map(mag, orient = "horizontal",
-                       right = "center",
-                       top = 5,
-                       textStyle = list(color = "#fff"), scale = NULL)  
-        
-      }) }
-    
-  )
-  
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-ui <- fluidPage( theme = cute_theme,
-                 #set colours of sliders
-                 setSliderColor(c("#ff7866", "#ff7866"), c(1, 2)),
-                 # Add the CSS style to the Shiny app
-                 tags$style(my_css),
-                 
-                 tags$script(HTML(
-              
-  
-             "
-
-
-
-
-  
- 
-  
-  
-  
-  
-  
-  "
-                 )),
-                 
-                 
-                 navbarPage(
-                   "Earthquake Tracker",
-                   
-                   #tags$style(
-                    # 'div[data-value="Plot"]{
-                    # height:1000px;
-                    # width:1400px;
-                    # background-image: url(https://cdn.pixabay.com/photo/2020/07/27/14/01/milky-way-5442529__480.jpg);
-                    # }',
-                    
-                     
-                     
-                    # ),
-                     tabPanel(#"Intro",
-                              br(),
-                                 
-                              
-                              
-                              
-                              #HTML("<div class='centre' id='parent'>Track earthquakes globally.<div id='border'></div></div>"),
-                              HTML('<svg id="zebra" viewBox="0 0 960 300">
-                                <symbol id="s-text">
-                                <text text-anchor="middle" x="50%" y="80%">Tracker</text>
-                                </symbol>
-                                
-                                <g class = "g-ants">
-                                <use xlink:href="#s-text" class="text-copy"></use>
-                                <use xlink:href="#s-text" class="text-copy"></use>
-                                <use xlink:href="#s-text" class="text-copy"></use>
-                                <use xlink:href="#s-text" class="text-copy"></use>
-                                <use xlink:href="#s-text" class="text-copy"></use>
-                                </g>
-                                </svg>'),
-                            
-                   
-                   
-                   
-                   ),
-                   tabPanel("Enter",
-                            
-                            mapUI(id="MAIN_MAP"),
-                            
-                            br(),
-                            fluidRow(
-                              column(4,sliderInput("sliderdate",
-                                                   label = "SELECT DATES:",
-                                                   value=c(as.POSIXct(Sys.Date()-7, tz = "UTC"),
-                                                           as.POSIXct(Sys.Date(), tz = "UTC")),
-                                                   min = as.POSIXct(Sys.Date()-7, tz = "UTC"),
-                                                   max = as.POSIXct(Sys.Date(), tz = "UTC"),
-                                                   step = 1,
-                                                   timeFormat="%Y-%m-%d"), offset=4)),
-                            
-                            
-                            
-                            #display map
-                            
-                            useShinyjs(),
-                            # Set up shinyjs
-                            
-                   ),
-                   #navbarMenu("Magnitudes",
-                              tabPanel("Magnitudes",
-                                       
-                                       br(),
-                                       echart_ui(id="ECHARTIE"),
-                                       br(),
-                                       showDTdataUI(id="testDTModule"),#show table of results  
-                                       
-                                       
-                                       
-                                       
-                                       
-                                       
-                              ),
-                              #tabPanel("Table",
-                                #       showDTdataUI(id="testDTModule"),  #show table of results
-                              #)
-                   )
-                   
-                 )
-                 
-
-
-
-server <- function(input, output, session) {
-  
-  
-  
-  
-  #create table output for reactive data frame
-  output$view<-renderTable({reactive_data()})    # Show the previous responses
-  # (update with current response when Submit is clicked)
-  
-  output$responses <- DT::renderDataTable({
-   input$submit
-    loadData()
-  })    
-  
-  
-  
-  #subset for database
-  reactive_data <- reactive({
-    #autoInvalidate()
-    #on.exit(invalidateLater(3000))
-    #on.exit(invalidateLater(6000), add = TRUE)
-    last2 <- quake_data()
-    
-    #quake_data()%>%select(mag, depth)%>%slice_sample(n = 2)
-    #rawTweets()%>%twListToDF()%>%select(created,text)
-    #last2 <-select(last2,magnitude= mag, depth)  #miss size
-    beginprep<-last2%>%select(mag, depth)
-    #beginprep<-as.data.frame(beginprep)
-    #beginprep<-data.frame(beginprep)
-    beginprep<-tail(beginprep, n=2)
-    beginprep<-data.frame(beginprep)
-    
-    return(beginprep)
-    
-    
-  })
-  
-  
-  
-  
-  
-  
-  
-  
-  # When the Submit button is clicked, save the form data
-  observeEvent(input$submit, {
-    saveData(reactive_data())
-  })
-  
-  
-  
-  
-  time_window<-reactive({
-    
-    input$hours
-  })
-  
-  
-  
-  #quake_data <- reactive({
-  #autoInvalidate()  
-  #on.exit(invalidateLater(3000))
-  #on.exit(invalidateLater(6000), add = TRUE)
-  #invalidateLater(30000)
-  
-  
-  quake_data  <- 
-    
-    
-    
-    #reactivePoll(
-    #intervalMillis = 1000000,
-    #NULL,
-    #checkFunc = function(){
-    #  Sys.time()
-    #},
-    #valueFunc = function(){
-      
-      
-      reactive({
-      
-      # Re-execute this reactive expression after 180000 milliseconds/three minutes
-      invalidateLater(180000, session)
-      
-      url <- ("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.csv")
-      
-      all_day_quakes <- read.csv(url)
-      
-      #current_time <- as.POSIXlt(Sys.time(), tz = "UTC")
-      
-      #all_day_quakes$time <- as.POSIXlt(all_day_quakes$time, tz = "UTC")
-      #selected_dt <- current_time - as.difftime(time_window(), units="hours" )
-      
-      
-      #quake_data <- all_day_quakes %>% dplyr::filter(time >= selected_dt)
-      
-      quake_data<-all_day_quakes%>%filter(time >=input$sliderdate[1] & time<=input$sliderdate[2])
-      
-      
-    })
-  
-  
-  
-  # Anything that calls autoInvalidate will automatically invalidate
-  # every 2 seconds.
-  #autoInvalidate <- reactiveTimer(3000)
-  
-  
-  
-  
-  
-  
-  quake_data2 <- reactive({
-    
-    #invalidateLater(600000, session = NULL)
-    #invalidateLater(30000)
-    
-    # Re-execute this reactive expression after 180000 milliseconds/three minutes
-    invalidateLater(180000, session)
-    
-    url2 <- ("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.csv")
-    
-    all_day_quakes2 <- read.csv(url2)
-    
-    
-    quake_data2<-all_day_quakes2%>%filter(time >=input$date_new[1] & time<=input$date_new[2])
-    
-    
-  })
-  
-  
-  
-  #call leaflet creation module
-  drawleafletServer(id="MAIN_MAP",quake_data)
-  
-  
-  #obtain basic stats
-  STATS_server(id="BasicStats", quake_data=quake_data)
-  
-  
-  #show metrics in a table
-  DT_server(id="testDTModule", quake_data2=quake_data2)
-  
-  
-  #ECHART plot
-  ECHART_server(id="ECHARTIE", quake_data2=quake_data2)
-  
-  
-}
-
-
-shinyApp(ui = ui, server = server)  
-library("shinydashboard")
-library("leaflet")
-library("ECharts2Shiny")
-library("echarts4r")
-library(RMySQL)
-library(data.table)
-library(thematic)
-library(bslib)
-library(shiny)
-library(shinyjs)
-library(shinyWidgets)
-my_css <- "
-
-    
-
-@import url('https://fonts.googleapis.com/css?family=Assistant');
-@import url('https://fonts.googleapis.com/css?family=Antic');
-
-div.centre {
-  text-align: left;
-  width: 200px;
-   color: white;
- #background-color: #eee;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-
-
-
-
-#parent {
-  height: 40px;
-  white-space: nowrap;
-  overflow: hidden;
-  font-family: 'Antic', monospace;  
-  font-size: 30px;
-  color: rgba(255,255,255,.70);
-  position: relative;
-}
-
-#border {
-  border-bottom: solid 3px rgba(0,255,0,.75);
-  position: absolute;
-  right: -7px;
-  width: 20px;
-}
-
-/* Animation */
-#parent {
-  animation: animated-text 2s steps(30,end) 1s 1 normal both
-}
-
-#border {
-   animation: animated-cursor 600ms steps(30,end) infinite;
-}
-
-/* text animation */
-
-@keyframes animated-text{
-  from{width: 0;}
-  to{width: 480px;}
-}
-
-/* cursor animations */
-
-@keyframes animated-cursor{
-  from{border-bottom-color: rgba(0,255,0,.75);}
-  to{border-bottom-color: transparent;}
-}
-
-
-div.layout {
-  text-align: center;
-}
-
-
-
-@import url(https://fonts.googleapis.com/css?family=Antic);
-@import url(https://fonts.googleapis.com/css?family=Khula);
-
-html, body{
-  height: 100%;
-  font-weight: 800;
-}
-
-body{
-  background: #030321;
-  font-family: Khula;
-}
-
-#zebra  {
-    display: block;
-    font: 10.5em 'Antic';
-    width: 960px;
-    height: 300px;
-    margin: 0 auto;
-}
-
-.text-copy {
-    fill: none;
-    stroke: white;
-    stroke-dasharray: 6% 29%;
-    stroke-width: 5px;
-    stroke-dashoffset: 0%;
-    animation: stroke-offset 5.5s infinite linear;
-}
-
-.text-copy:nth-child(1){
-  stroke: #4D163D;
-  animation-delay: -1;
-}
-
-.text-copy:nth-child(2){
-  stroke: #840037;
-  animation-delay: -2s;
-}
-
-.text-copy:nth-child(3){
-  stroke: #BD0034;
-  animation-delay: -3s;
-}
-
-.text-copy:nth-child(4){
-  stroke: #BD0034;
-  animation-delay: -4s;
-}
-
-.text-copy:nth-child(5){
-  stroke: #FDB731;
-  animation-delay: -5s;
-}
-
-@keyframes stroke-offset{
-  100% {stroke-dashoffset: -35%;}
-}
-
-
-
-
-
-
-
-
-
-"
-
-
-
-
-
-
-
-
-
-# Create a custom theme
-cute_theme <- bslib::bs_theme(
-  
-  bg = "#36393B", # background colour
-  fg = "#FFD166", # most of the text on your app
-  primary = "#F26430", # buttons, ...
-  
-  # you can also choose fonts
-  base_font = font_google("Antic"),
-  heading_font = font_google("Antic")
-)
-
-
-neon_theme <- bs_theme(
-  version = 4,
-  bg = "#000000",
-  fg = "#FFFFFF",
-  primary = "#9600FF",
-  secondary = "#1900A0",
-  success = "#38FF12",
-  info = "#00F5FB",
-  warning = "#FFF100",
-  danger = "#FF00E3",
-  base_font = "Marker Felt",
-  heading_font = "Marker Felt",
-  code_font = "Chalkduster"
-)
-
-
-
-
-
-
-thematic::thematic_shiny()
-
-
-
-#mydb = dbConnect(MySQL(), user='sql4479557', password='hRYkyBPDVG', dbname='sql4479557', host='sql4.freesqldatabase.com')
-
-
-#dbRemoveTable(mydb,"reactive_dataframe")
-
-#mag<-c(4,5)
-#depth<-c(2,3)
-#reactive_dataframe<-data.frame(mag,depth)
-#dbWriteTable(mydb, name='reactive_dataframe', value=reactive_dataframe, row.names=FALSE)
-
-#dbWriteTable(mydb, name='reactive_dataframe', value=reactive_dataframe, row.names = FALSE)
-
-
-
-#dbWriteTable(mydb, name='reactive_dataframe', value=reactive_dataframe)
-#dbRemoveTable(mydb,"reactive_dataframe")
-#dbListTables(mydb)
-
-
-
-
-
-options(mysql = list(
-  "host" = "sql4.freesqldatabase.co                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         m",
-  "port" = ,
-  "user" = " ",
-  "password" = " "
-))
-
-
-databaseName <- "   "
-table <- "reactive_dataframe"
-
-saveData <- function(data) {
-  # Connect to the database
-  db <- dbConnect(MySQL(), dbname = databaseName, host = options()$mysql$host,
-                  port = options()$mysql$port, user = options()$mysql$user,
-                  password = options()$mysql$password)
-  
-  #dbWriteTable(db, "reactive_dataframe", data, row.names=F)
-  #dbWriteTable(db, "reactive_dataframe", data, append = TRUE)
-  #dbAppendTable(db, "reactive_dataframe", data, row.names=F)
-  #dbWriteTable(db, "reactive_dataframe", data, overwrite = TRUE, row.names=F)
-  dbWriteTable(db, "reactive_dataframe", data, append = TRUE, row.names=F)
-  
-  dbDisconnect(db)
-}
-
-loadData <- function() {
-  # Connect to the database
-  db <- dbConnect(MySQL(), dbname = databaseName, host = options()$mysql$host,
-                  port = options()$mysql$port, user = options()$mysql$user,
-                  password = options()$mysql$password)
-  # Construct the fetching query
-  query <- sprintf("SELECT * FROM %s", table)
-  # Submit the fetch query and disconnect
-  data <- dbGetQuery(db, query)
-  dbDisconnect(db)
-  data
-}
-
-
-
-
-
-
-
-
-
-
-
-
-#echartUI<-function(id) {
-#  ns<-NS(id)
-#  echarts4rOutput(ns("timeline"))
-#}
-
-
-
-#time filter control slider
-echart_ui <- function(id) {
-  
-  ns <- shiny::NS(id)
-  
-  shiny::tagList(
-    
-    
-    echarts4rOutput(ns("timeline")),
-    br(),
-    fluidRow(
-      column(4,  
-             sliderInput("date_new",
-                         label = "SELECT DATES:",
-                         value=c(as.POSIXct(Sys.Date()-7, tz = "UTC"),
-                                 as.POSIXct(Sys.Date(), tz = "UTC")),
-                         min = as.POSIXct(Sys.Date()-7, tz = "UTC"),
-                         max = as.POSIXct(Sys.Date(), tz = "UTC"),
-                         step = 1,
-                         timeFormat="%Y-%m-%d"), offset=4
              
-      ))
-    
-    
-  )
-  
-}
-
-
-
-
-#user interface module for the main map
-mapUI <- function(id) {
-  # Create a namespace function using the provided id
-  ns <- NS(id)
-  # Return a piece of UI
-  # namespace the id by wrapping it in 'ns()'
-  leafletOutput(ns("quake_map"))
-}
-
-
-
-
-
-
-drawleafletServer<-function(id, quake_data) {
-  
-  shiny::moduleServer(
-    id,
-    
-    drawleafletServer<-function(input, output, session) {
-      
-      
-      output$quake_map <- renderLeaflet({
+        output$table<-renderTable({
         
-        df <- quake_data()
-        
-        # Categorize magnitude in terms of size
-        df$size <- cut(df$mag,breaks = c(-1, 3.9, 4.9, 5.9, 6.9, 7.9, 12),
-                       labels=c("minor", "light", "moderate", "strong", "major", "great 8+"))
-        
-        # Create colour pallet
-        col_rainbow<- c("#66ffff","#1aff1a","#f07900","#ff0000","#b30000","#b30059")
-        pallet <- colorFactor(col_rainbow, df$size)
-        
-        # Create popup in HTML
-        pop <- paste(
-          "<b>Place:</b>", df$place, "<br>",
-          "<b>Time:</b>", df$time, "<br>",   # should make it nicer format
-          "<b>Mag:</b>", as.character(df$mag), "<br>",
-          "<b>Depth:</b>", as.character(df$depth), "km<br>"
-        )
+        filter_data <- quake_data3()
         
         
-        ## Leaflet map
-        my_map <- leaflet(df, options = leafletOptions(minZoom = 2)) %>%
-          
-          addProviderTiles(providers$CartoDB.DarkMatter) %>%
-          
-          setView(100.65, 120.0285, zoom = 1) %>%
-          
-          setView(24, 10, zoom=1) %>%
-          
-          addCircles( ~longitude, ~latitude,  
-                      
-                      weight= ~ifelse(mag < 4, 1, 6),
-                      color= ~pallet(size),
-                      radius = ~ifelse(mag < 4, 2, 5), # add ifs
-                      popup = pop
-                      
-          )
-        
-        # Add legend
-        my_map <- my_map %>%
-          addLegend( "bottomright", pal = pallet,
-                     values = sort(df$size),
-                     title = "Magnitude")
-        
-        # Return map
-        my_map
-        
-      })
-    })
-}
-
-
-
-
-
-
-
-# module for presenting data using DT
-showDTdataUI <- function(id) {
-  ns <- NS(id)
-  tagList(
-    #DT::dataTableOutput(ns("table"))
-    tableOutput(ns("table"))
-    )
-}
-
-
-
-
-
-DT_server <- function(id, quake_data2) {  
-  
-  shiny::moduleServer(
-    id,
-    
-    function(input, output, session) {
-      
-      #output$table <- renderDataTable({        
-        
-      output$table<-renderTable({
-        last5 <- quake_data2()
-        
-        
-        last5 <- select(last5, time, place, magnitude= mag, depth,
+        filter_data <- select(filter_data, time, place, magnitude= mag, depth,
                         type)  #miss size
         
-        
-        
-        #last5 <- last5[1:5,]    
-        
-        
-        #change all capitals T's to lower case
-        last5$place <- gsub("T"," t",last5$place)
-        
-        #last5$time <- as.POSIXlt(last5$time, tz = "UTC")
-        
-        #create new variable and dataframe
-        newdata<-last5%>%mutate(ex_depth=depth*1000)
-        
-        
-        
         #round numeric variables
-        newdata<-newdata%>%mutate_if(is.numeric, round, 2)
+        filter_data<-filter_data%>%mutate_if(is.numeric, round, 2)
         
-        
-        
-        
-        # newdata$size <- cut(newdata$magnitude,breaks = c(-1, 3.9, 4.9, 5.9, 6.9, 7.9, 12),
-        #                labels=c("minor", "light", "moderate", "strong", "major", "great 8+"))
-        
-        
-        
-        
-        
-        newdata<-newdata%>%filter(!is.na(depth)) %>%
-          select(time,place,magnitude)%>%   #slice_head(n = 5)
+          filter_data<-filter_data%>%filter(!is.na(depth)) %>%
+          
+            select(time,place,magnitude)%>%   
+          
+          
           slice(which.max(magnitude))%>% rename(Time = time,
                                                 Location = place,
                                                 Largest = magnitude)
-        #summarise(
-        #count = n(),
-        #mean_mag = mean(magnitude, na.rm = TRUE),
-        #min_mag = min(magnitude, na.rm = TRUE),
-        #max_mag= max(magnitude, na.rm= TRUE)
         
-        #  )  
-        #count(size) %>%
-        #arrange(desc(n))%>%
-        #mutate(prop=n/sum(n))%>%
-        #mutate_if(is.numeric, round,2)%>%
-        #ungroup()
-        
-        library(dplyr)
-        library(lubridate)
-        
-        #newdata %>% transmute(time = dmy_hm(time)) %>% arrange(desc(time))
-        
-        data.frame(newdata)
-       
-        
-        
-        #DT::datatable(newdata,options = list(
-       #  initComplete = JS(
-        #    "function(settings, json) {",
-        #    "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
-       #     "}")
-       # ))
+          data.frame(filter_data)
+      
         
       })
     })
@@ -1408,27 +427,31 @@ ECHART_server <- function(id, quake_data2) {
 
 
 
-ui <- fluidPage( theme = cute_theme,
+ui <- fluidPage(  useShinyjs(), #Set up shinyjs
+                
+  
+                 HTML('<meta name="viewport" content="width=1024">'),
+                 theme = golden_theme,
                  #set colours of sliders
-                 setSliderColor(c("#ff7866", "#ff7866"), c(1, 2)),
+                 setSliderColor(c("#DC343B ", "#DC343B", "#DC343B"), c(1, 2, 3)),
                  # Add the CSS style to the Shiny app
                  tags$style(my_css),
                  
                  tags$script(HTML(
-              
-  
-             "
+                   
+                   
+                   "
 
 
 
 
-  
  
-  
-  
-  
-  
-  
+ 
+ 
+ 
+ 
+ 
+ 
   "
                  )),
                  
@@ -1436,17 +459,12 @@ ui <- fluidPage( theme = cute_theme,
                  navbarPage(
                    "Earthquake Tracker",
                    
-                   #tags$style(
-                    # 'div[data-value="Plot"]{
-                    # height:1000px;
-                    # width:1400px;
-                    # background-image: url(https://cdn.pixabay.com/photo/2020/07/27/14/01/milky-way-5442529__480.jpg);
-                    # }',
+                   
                     
                      
                      
-                    # ),
-                     tabPanel(#"Intro",
+                  
+                  tabPanel(
                               br(),
                                  
                               
@@ -1488,19 +506,18 @@ ui <- fluidPage( theme = cute_theme,
                             
                             
                             
-                            #display map
+                          
                             
-                            useShinyjs(),
-                            # Set up shinyjs
+                            
                             
                    ),
-                   #navbarMenu("Magnitudes",
-                              tabPanel("Magnitudes",
+                   
+                  tabPanel("Magnitudes",
                                        
                                        br(),
                                        echart_ui(id="ECHARTIE"),
                                        br(),
-                                       showDTdataUI(id="testDTModule"),#show table of results  
+                                       #showDTdataUI(id="testDTModule"),#show table of results  
                                        
                                        
                                        
@@ -1508,13 +525,50 @@ ui <- fluidPage( theme = cute_theme,
                                        
                                        
                               ),
-                              #tabPanel("Table",
-                                #       showDTdataUI(id="testDTModule"),  #show table of results
-                              #)
-                   )
+                 tabPanel("Summary Stats",
+                                       
+                                   br(),    
+                          sliderInput("date_new3",
+                                      label = "FILTER DATES:",
+                                      value=c(as.POSIXct(Sys.Date()-7, tz = "UTC"),
+                                              as.POSIXct(Sys.Date(), tz = "UTC")),
+                                      min = as.POSIXct(Sys.Date()-7, tz = "UTC"),
+                                      max = as.POSIXct(Sys.Date(), tz = "UTC"),
+                                      step = 1,
+                                      timeFormat="%Y-%m-%d"),
+                                    showDTdataUI(id="testDTModule"),  #show table of results
+                                    br(),
+                                      
+                                    tableOutput("table2"),
+                                    br(),
+             
+             HTML("<h5>What do these table metrics show?</h5>"),
+             hr(),
+             HTML( "  
+          <ul>
+          <li>Q1 - denotes the first quartile, one quarter of the data fall below this value</li>
+          <li> Median - denotes the midpoint of a data set, half of the values are less than the median, and half are higher </li>
+          <li>Q3 - denotes the third quartile, three quarters of the data fall below this value</li>
+          
+          </ul>
+           <br> 
+            NB: Please note that the times used in this app are marked by Universal Time Coordinated (UTC) - this is 0 hours 
+                ahead of Greenwich Mean Time and 1 hour behind BST (British Summer Time).       
+                   "
                    
-                 )
-                 
+             ),
+             
+        )
+    )  
+)          
+                                    
+                         
+    
+                   
+          
+
+
+
 
 
 
@@ -1523,80 +577,9 @@ server <- function(input, output, session) {
   
   
   
-  #create table output for reactive data frame
-  output$view<-renderTable({reactive_data()})    # Show the previous responses
-  # (update with current response when Submit is clicked)
   
-  output$responses <- DT::renderDataTable({
-   input$submit
-    loadData()
-  })    
-  
-  
-  
-  #subset for database
-  reactive_data <- reactive({
-    #autoInvalidate()
-    #on.exit(invalidateLater(3000))
-    #on.exit(invalidateLater(6000), add = TRUE)
-    last2 <- quake_data()
+quake_data  <- 
     
-    #quake_data()%>%select(mag, depth)%>%slice_sample(n = 2)
-    #rawTweets()%>%twListToDF()%>%select(created,text)
-    #last2 <-select(last2,magnitude= mag, depth)  #miss size
-    beginprep<-last2%>%select(mag, depth)
-    #beginprep<-as.data.frame(beginprep)
-    #beginprep<-data.frame(beginprep)
-    beginprep<-tail(beginprep, n=2)
-    beginprep<-data.frame(beginprep)
-    
-    return(beginprep)
-    
-    
-  })
-  
-  
-  
-  
-  
-  
-  
-  
-  # When the Submit button is clicked, save the form data
-  observeEvent(input$submit, {
-    saveData(reactive_data())
-  })
-  
-  
-  
-  
-  time_window<-reactive({
-    
-    input$hours
-  })
-  
-  
-  
-  #quake_data <- reactive({
-  #autoInvalidate()  
-  #on.exit(invalidateLater(3000))
-  #on.exit(invalidateLater(6000), add = TRUE)
-  #invalidateLater(30000)
-  
-  
-  quake_data  <- 
-    
-    
-    
-    #reactivePoll(
-    #intervalMillis = 1000000,
-    #NULL,
-    #checkFunc = function(){
-    #  Sys.time()
-    #},
-    #valueFunc = function(){
-      
-      
       reactive({
       
       # Re-execute this reactive expression after 180000 milliseconds/three minutes
@@ -1606,14 +589,8 @@ server <- function(input, output, session) {
       
       all_day_quakes <- read.csv(url)
       
-      #current_time <- as.POSIXlt(Sys.time(), tz = "UTC")
       
-      #all_day_quakes$time <- as.POSIXlt(all_day_quakes$time, tz = "UTC")
-      #selected_dt <- current_time - as.difftime(time_window(), units="hours" )
-      
-      
-      #quake_data <- all_day_quakes %>% dplyr::filter(time >= selected_dt)
-      
+      #apply time filtering
       quake_data<-all_day_quakes%>%filter(time >=input$sliderdate[1] & time<=input$sliderdate[2])
       
       
@@ -1621,9 +598,49 @@ server <- function(input, output, session) {
   
   
   
-  # Anything that calls autoInvalidate will automatically invalidate
-  # every 2 seconds.
-  #autoInvalidate <- reactiveTimer(3000)
+  
+  
+  
+  output$table2<-renderTable({
+    
+    newdata <- quake_data3()
+    
+    newdata <- select(newdata, time, place, magnitude= mag, depth,
+                    type) 
+    
+    
+    #round numeric variables
+    newdata<-newdata%>%mutate_if(is.numeric, round, 2)
+    newdata<-newdata%>%filter(!is.na(depth)) %>%
+      select(time,place,magnitude)%>% 
+      summarize(MinMag=min(magnitude, na.rm=TRUE),
+                Q1=quantile(magnitude, probs=0.25),
+                MedianMag=median(magnitude, na.rm=TRUE),
+                Q3=quantile(magnitude, probs=0.75),
+                MaxMag=max(magnitude, na.rm=TRUE)
+                )
+    
+    
+    data.frame(newdata)
+    })
+
+  
+  
+  quake_data3 <- reactive({
+    
+    # Re-execute this reactive expression after 180000 milliseconds/three minutes
+    invalidateLater(180000, session)
+    
+    url3 <- ("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.csv")
+    
+    all_day_quakes3 <- read.csv(url3)
+    
+    
+    quake_data3<-all_day_quakes3%>%filter(time >=input$date_new3[1] & time<=input$date_new3[2])
+    
+    
+  })
+  
   
   
   
@@ -1632,10 +649,8 @@ server <- function(input, output, session) {
   
   quake_data2 <- reactive({
     
-    #invalidateLater(600000, session = NULL)
-    #invalidateLater(30000)
     
-    # Re-execute this reactive expression after 180000 milliseconds/three minutes
+    #Re-execute this reactive expression after 180000 milliseconds/three minutes
     invalidateLater(180000, session)
     
     url2 <- ("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.csv")
@@ -1657,15 +672,16 @@ server <- function(input, output, session) {
   #obtain basic stats
   STATS_server(id="BasicStats", quake_data=quake_data)
   
-  
-  #show metrics in a table
-  DT_server(id="testDTModule", quake_data2=quake_data2)
-  
-  
+
   #ECHART plot
   ECHART_server(id="ECHARTIE", quake_data2=quake_data2)
   
   
+  
+  #show metrics in a table
+  DT_server(id="testDTModule", quake_data3)
+  
+
 }
 
 
