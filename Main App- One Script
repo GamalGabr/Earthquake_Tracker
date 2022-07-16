@@ -1,6 +1,5 @@
 
-        
-#call prerequisite libraries
+  #call prerequisite libraries
 library("DT")
 library("dplyr")
 library("shinydashboard")
@@ -20,6 +19,45 @@ library(lubridate)
 
 #define design layout
 my_css <- "
+
+
+#loadmessage {
+font-size: 20px;
+color: #FFD166
+text-decoration: underline;
+}  
+
+
+.control-label { 
+   
+    color: #A57C00;
+   
+}
+
+.leaflet-popup-content-wrapper {
+    background:  #39FF14;
+    color: #ffffff;
+        padding: 2px;
+    border-radius: 0px;
+}
+
+
+
+
+
+
+.partner {
+  display:none;
+}
+
+.fontStuff {
+  font-size: 65px; 
+  text-transform: uppercase;
+} 
+
+
+
+
 .navbar { background-color:#36393B ;
                        font-family: Antic;
                        font-size: 15px;
@@ -29,6 +67,104 @@ my_css <- "
 @import url('https://fonts.googleapis.com/css?family=Assistant');
 @import url('https://fonts.googleapis.com/css?family=Antic');
 @import url('https://fonts.googleapis.com/css?family=Khula');
+
+
+#box2{
+width: 250px;
+height: 300px;
+background:#ff0;
+border-radius:100px 300px 300px 400px}
+
+
+
+#rcorners1 {
+  border-radius: 25px;
+  background: #73AD21;
+  padding: 20px; 
+  width: 200px;
+  height: 150px;  
+}
+
+
+
+
+
+.well {
+      height: 140px;
+      width: 500px;
+     
+    }
+    
+    
+    @keyframes animationFrames{
+      0% {
+        background-color: #FFD700;
+      }
+      15% {
+        background-color: #F0E2B6;
+      }
+      30% {
+        background-color: #FFD700;
+      }
+      45% {
+        background-color: #F0E2B6;
+      }
+      60% {
+        background-color: #FFD700;
+      }
+      75% {
+       background-color: #F0E2B6;
+      }
+      100% {
+        background-color: #FFD700;
+      }
+    }
+    
+
+
+
+.custom-popup .leaflet-popup-content-wrapper {
+  background: #DB0925;
+  color:#fff;
+  font-size:20px;
+  line-height:24px;
+  }
+.custom-popup .leaflet-popup-content-wrapper a {
+  color:rgba(255,255,255,0.5);
+  }
+.custom-popup .leaflet-popup-tip-container {
+  width:30px;
+  height:15px;
+  }
+.custom-popup .leaflet-popup-tip {
+  border-left:15px solid transparent;
+  border-right:15px solid transparent;
+  border-top:15px solid #2c3e50;
+  }
+
+
+
+
+
+
+
+.underlinestyle{
+    text-decoration-line: underline;
+    
+}
+
+
+
+#boxStyle{
+color:black; 
+background-color:#DE4F53; 
+margin: 0 3em 0 3em; 
+border-radius: .5em; 
+height :10vh; color:white; 
+align:center; 
+text-align:center; 
+display: table-cell;
+vertical-align: middle;}
 
 
 
@@ -236,7 +372,7 @@ drawleafletServer<-function(id, quake_data) {
                        labels=c("minor", "light", "moderate", "strong", "major", "great 8+"))
         
         # Create colour pallet
-        col_rainbow<- c("#66ffff","#1aff1a","#f07900","#ff0000","#b30000","#b30059")
+        col_rainbow<- c("#66ffff","#1aff1a","#1F51FF","#FF0000","#b30000","#b30059")
         pallet <- colorFactor(col_rainbow, df$size)
         
         # Create popup in HTML
@@ -249,8 +385,9 @@ drawleafletServer<-function(id, quake_data) {
         
         
         ## Leaflet map
-        my_map <- leaflet(df, options = leafletOptions(minZoom = 2)) %>%
+        my_map <- 
           
+          leaflet(df, options = leafletOptions(minZoom = 2)) %>%
           addProviderTiles(providers$CartoDB.DarkMatter) %>%
           
           setView(100.65, 120.0285, zoom = 1) %>%
@@ -259,16 +396,16 @@ drawleafletServer<-function(id, quake_data) {
           
           addCircles( ~longitude, ~latitude,  
                       
-                      weight= ~ifelse(mag < 4, 1, 6),
+                      weight= ~ifelse(mag < 4, 3, 6),
                       color= ~pallet(size),
-                      radius = ~ifelse(mag < 4, 2, 5), # add ifs
+                      radius = ~ifelse(mag < 4, 12, 24), # add ifs
                       popup = pop
                       
           )
         
         # Add legend
         my_map <- my_map %>%
-          addLegend( "bottomright", pal = pallet,
+          leaflet::addLegend( "bottomright", pal = pallet,
                      values = sort(df$size),
                      title = "Magnitude")
         
@@ -433,9 +570,44 @@ ui <- fluidPage(  useShinyjs(), #Set up shinyjs
                  HTML('<meta name="viewport" content="width=1024">'),
                  theme = golden_theme,
                  #set colours of sliders
-                 setSliderColor(c("#DC343B ", "#DC343B", "#DC343B"), c(1, 2, 3)),
+                 setSliderColor(c(" #b08f26", "#b08f26", "#b08f26"), c(1, 2, 3)),
                  # Add the CSS style to the Shiny app
                  tags$style(my_css),
+                 
+                 
+                 tags$script(HTML("
+ 
+    componentDidUpdate(prevProps, prevState) {
+    if (prevState.zoomLevel !== this.state.zoomLevel) {
+      if (this.state.zoomLevel <= 0) {
+        this.setState({ draggable: false });
+      } else {
+        this.setState({ draggable: true });
+      }
+    }
+  }
+
+  handleZoomEnd = () => {
+    if (this.map && this.map.leafletElement) {
+      let zoomLevel = this.map.leafletElement.getZoom();
+
+      this.setState({ zoom: zoomLevel });
+    }
+  };
+    });
+")) ,
+                 
+            
+                 tags$script(HTML("
+  jQuery(document).ready(function(){
+  $('.hellothere').fadeOut(60000,function(){
+    $('.partner').fadeIn(10000);
+  });
+});
+    ")),
+                 
+                 
+                 
                  
                  tags$script(HTML(
                    
@@ -504,7 +676,9 @@ ui <- fluidPage(  useShinyjs(), #Set up shinyjs
                                                    step = 1,
                                                    timeFormat="%Y-%m-%d"), offset=4)),
                             
-                            
+                            br(),
+                            br(),
+                            br(),
                             
                           
                             
@@ -520,6 +694,14 @@ ui <- fluidPage(  useShinyjs(), #Set up shinyjs
                                        #showDTdataUI(id="testDTModule"),#show table of results  
                                        
                                        
+                       
+                           
+                           
+                           
+                                       br(),
+                                       br(),
+                           
+                                       
                                        
                                        
                                        
@@ -528,22 +710,61 @@ ui <- fluidPage(  useShinyjs(), #Set up shinyjs
                  tabPanel("Summary Stats",
                                        
                                    br(),    
-                          sliderInput("date_new3",
-                                      label = "FILTER DATES:",
-                                      value=c(as.POSIXct(Sys.Date()-7, tz = "UTC"),
-                                              as.POSIXct(Sys.Date(), tz = "UTC")),
-                                      min = as.POSIXct(Sys.Date()-7, tz = "UTC"),
-                                      max = as.POSIXct(Sys.Date(), tz = "UTC"),
-                                      step = 1,
-                                      timeFormat="%Y-%m-%d"),
+      HTML("<h3 class='underlinestyle'>Summary Statistics<h4>"),
+      br(),
+      
+      #HTML("<h1 class='hellothere font-168856 font-444086 fontStuff'>Hello there.</h1>
+      #<h1 class='partner font-168856 font-444086 fontStuff'>Your partner in digital.</h1>"),                   
+      ##column(3,div(htmlOutput("box1")), style=boxStyle),
+      #fluidRow(column(width = 7, wellPanel(tags$style(".well {background-color:#FFD166;}"), sliderInput("date_new3",
+      #                                                                                                  label = "FILTER DATES:",
+      #                                                                                                  value=c(as.POSIXct(Sys.Date()-7, tz = "UTC"),
+      #                                                                                                                                                                                                                 as.POSIXct(Sys.Date(), tz = "UTC")),
+      #                                                                                                  min = as.POSIXct(Sys.Date()-7, tz = "UTC"),
+      #                                                                                                  max = as.POSIXct(Sys.Date(), tz = "UTC"),
+      #                                                                                                  step = 1,
+      #                                                                                                  timeFormat="%Y-%m-%d")))),
+      
+      
+      
+      
+      
+      sliderInput("date_new3",
+                  label = "FILTER DATES:",
+                  value=c(as.POSIXct(Sys.Date()-7, tz = "UTC"),
+                  as.POSIXct(Sys.Date(), tz = "UTC")),
+                  min = as.POSIXct(Sys.Date()-7, tz = "UTC"),
+                  max = as.POSIXct(Sys.Date(), tz = "UTC"),
+                  step = 1,
+                  timeFormat="%Y-%m-%d"),
+                                                                                                      
+     # HTML("<div id='rcorners1'>
+     #   <input type='range' min='1' max='100' value='50' class='slider' id='myRange'>
+    #  </div>"),          
+     #HTML("<form id='rcorners1'>
+     #   <div class='form-group shiny-input-container'>
+     #      <label class='control-label' for='bins'>Number of bins:</label>
+     #      <input class='js-range-slider' id='bins' data-min='1' data-max='50' data-from='30'  data-step='1' data-grid='true' data-grid-num='9.8' data-grid-snap='false'  data-prettify-separator=',' data-prettify-enabled='true' data-keyboard=
+     #     'true'  data-keyboard-step='2.04081632653061' data-data-type='number'/>
+     #      </div>
+     #     </form>"),             
+      
+      br(),
+      br(),
+               
+      
+   
+
+                          
                                     showDTdataUI(id="testDTModule"),  #show table of results
                                     br(),
                                       
                                     tableOutput("table2"),
                                     br(),
              
-             HTML("<h5>What do these table metrics show?</h5>"),
-             hr(),
+          #HTML("<h5>What do these table metrics show?</h5>"),
+          HTML("<h3 class='underlinestyle'>What do these table metrics show?</h4>"),       
+          br(),
              HTML( "  
           <ul>
           <li>Q1 - denotes the first quartile, one quarter of the data fall below this value</li>
@@ -559,9 +780,9 @@ ui <- fluidPage(  useShinyjs(), #Set up shinyjs
              ),
              
         )
-    )  
-)          
-                                    
+      
+       )  
+     )                               
                          
     
                    
@@ -686,3 +907,32 @@ quake_data  <-
 
 
 shinyApp(ui = ui, server = server)  
+
+
+
+
+
+
+
+
+
+
+                  
+                         
+    
+                   
+          
+
+
+
+
+    
+
+    
+    
+    
+  
+  
+  
+
+
